@@ -114,6 +114,31 @@
     color:var(--muted);
   }
   .scale-explain b{color:var(--navy-ink);}
+  .scale-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px;}
+  .scale-table th,.scale-table td{
+    border:1px solid var(--line);
+    padding:8px 10px;
+    text-align:left;
+  }
+  .scale-table th{
+    background:var(--navy);
+    color:#fff;
+    font-weight:600;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+  .scale-table td.val{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    color:var(--navy);
+    text-align:center;
+    width:48px;
+  }
+  .scale-table td.label{font-weight:600;color:var(--navy-ink);width:160px;}
+  .scale-table td.desc{color:var(--muted);}
+  .scale-table tr:nth-child(even){background:var(--paper);}
   .start-cta{
     display:flex;align-items:center;justify-content:space-between;gap:14px;
     margin-top:24px;flex-wrap:wrap;
@@ -351,6 +376,9 @@
     .beam{top:17px;}
     .wrap{padding:32px 14px 30px;}
     .footer-bar{padding:12px 14px;flex-wrap:wrap;}
+    .scale-table{font-size:11.5px;}
+    .scale-table td.label{width:auto;}
+    .scale-table th,.scale-table td{padding:6px 7px;}
   }
   @media (prefers-reduced-motion: reduce){
     .pill,.bar-fill,.progress-fill{transition:none;}
@@ -395,8 +423,18 @@
     </div>
 
     <div class="scale-explain">
-      <b>Tentang skala penilaian:</b> Setiap perbandingan disajikan sebagai satu sumbu, dengan dimensi kiri dan kanan di kedua ujungnya. Titik tengah (=) berarti kedua dimensi <b>sama penting</b>. Semakin jauh dari tengah ke salah satu sisi, semakin dominan tingkat kepentingan dimensi pada sisi tersebut (skala 1–9, mengikuti standar Saaty: 1 = sama penting, 3 = sedikit lebih penting, 5 = lebih penting, 7 = sangat lebih penting, 9 = mutlak lebih penting).
+      <b>Tentang skala penilaian:</b> Setiap perbandingan disajikan sebagai satu sumbu, dengan dimensi kiri dan kanan di kedua ujungnya. Titik tengah (=) berarti kedua dimensi <b>sama penting</b>. Semakin jauh dari tengah ke salah satu sisi, semakin dominan tingkat kepentingan dimensi pada sisi tersebut.
     </div>
+
+    <table class="scale-table">
+      <tr><th>Nilai</th><th>Tingkat Kepentingan</th><th>Keterangan</th></tr>
+      <tr><td class="val">1</td><td class="label">Sama penting</td><td class="desc">Kedua dimensi memberikan kontribusi yang setara terhadap kualitas produk.</td></tr>
+      <tr><td class="val">3</td><td class="label">Sedikit lebih penting</td><td class="desc">Ada indikasi yang mendukung satu dimensi sedikit lebih penting dibanding pasangannya.</td></tr>
+      <tr><td class="val">5</td><td class="label">Lebih penting</td><td class="desc">Bukti dan pertimbangan secara cukup kuat menunjukkan satu dimensi lebih penting.</td></tr>
+      <tr><td class="val">7</td><td class="label">Sangat lebih penting</td><td class="desc">Satu dimensi terbukti sangat dominan kepentingannya dan didukung kuat dalam praktik.</td></tr>
+      <tr><td class="val">9</td><td class="label">Mutlak lebih penting</td><td class="desc">Bukti yang mendukung dominasi satu dimensi bersifat mutlak dan tidak terbantahkan.</td></tr>
+      <tr><td class="val">2, 4, 6, 8</td><td class="label">Nilai antara</td><td class="desc">Digunakan saat penilaian berada di antara dua tingkat kepentingan di atas (tidak tersedia sebagai pilihan pada skala ini, namun dapat dijelaskan jika diperlukan).</td></tr>
+    </table>
 
     <p style="margin-top:14px;">Setelah seluruh 21 perbandingan terisi, sistem akan menghitung bobot prioritas dan <b>Consistency Ratio (CR)</b> secara otomatis, lalu jawaban Anda akan langsung <b>tersimpan ke database kami</b>. Sebagai cadangan, sebuah file CSV berisi hasil penilaian Anda juga akan otomatis terunduh ke perangkat Anda.</p>
 
@@ -487,7 +525,7 @@
   // Ganti dengan URL Web App hasil deploy Apps Script Anda.
   // Lihat README_GOOGLE_SHEETS.md untuk cara mendapatkan URL ini.
   // =====================================================================
-  const SHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbx-jouB0acJLIcDDM9spp4YK-xThkluE5E7ULb01aShmvIZ3BNSl1a-m58T_FuGH18J/exec';
+  const SHEET_WEBHOOK_URL = 'PASTE_URL_WEB_APP_ANDA_DISINI';
   // =====================================================================
 
   const dims = [
