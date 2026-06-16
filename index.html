@@ -399,7 +399,7 @@
       <b>Tentang skala penilaian:</b> Setiap perbandingan disajikan sebagai satu sumbu, dengan dimensi kiri dan kanan di kedua ujungnya. Titik tengah (=) berarti kedua dimensi <b>sama penting</b>. Semakin jauh dari tengah ke salah satu sisi, semakin dominan tingkat kepentingan dimensi pada sisi tersebut (skala 1–9, mengikuti standar Saaty: 1 = sama penting, 3 = sedikit lebih penting, 5 = lebih penting, 7 = sangat lebih penting, 9 = mutlak lebih penting).
     </div>
 
-    <p style="margin-top:14px;">Setelah seluruh 21 perbandingan terisi, sistem akan menghitung bobot prioritas dan <b>Consistency Ratio (CR)</b> secara otomatis. Jika CR ≤ 0,10, penilaian Anda dianggap konsisten dan jawaban akan otomatis <b>tersimpan ke database kami</b>. Jika CR &gt; 0,10, Anda akan diminta meninjau ulang sebelum data dikirim.</p>
+    <p style="margin-top:14px;">Setelah seluruh 21 perbandingan terisi, sistem akan menghitung bobot prioritas dan <b>Consistency Ratio (CR)</b> secara otomatis, lalu jawaban Anda akan langsung <b>tersimpan ke database kami</b>. CR digunakan tim kami sebagai indikator kualitas data saat agregasi, sehingga Anda tidak perlu khawatir mengulang pengisian — cukup isi sesuai penilaian terbaik Anda.</p>
 
     <div class="start-cta">
       <span class="txt">Silakan lanjutkan ke bawah untuk mengisi identitas dan memulai penilaian.</span>
@@ -801,13 +801,6 @@
 
     const statusEl = document.getElementById('save-status');
 
-    if (res.CR > 0.1){
-      statusEl.textContent = 'Jawaban belum konsisten (CR > 0.10) — silakan tinjau ulang perbandingan sebelum data dikirim ke database.';
-      statusEl.classList.remove('ok');
-      statusEl.classList.add('bad');
-      return;
-    }
-
     statusEl.textContent = 'Mengirim ke database...';
     statusEl.classList.remove('bad');
     btnHitung.disabled = true;
@@ -816,7 +809,11 @@
     btnHitung.disabled = false;
 
     if (saved.ok){
-      statusEl.textContent = 'Tersimpan ✓ — terima kasih, jawaban Anda telah masuk ke database kami.';
+      if (res.CR <= 0.1){
+        statusEl.textContent = 'Tersimpan ✓ — terima kasih, jawaban Anda telah masuk ke database kami.';
+      } else {
+        statusEl.textContent = 'Tersimpan ✓ — terima kasih. Catatan: konsistensi penilaian sedikit di luar ambang ideal (CR > 0.10), namun jawaban Anda tetap tercatat dan akan ditinjau oleh tim kami.';
+      }
       statusEl.classList.add('ok');
       statusEl.classList.remove('bad');
     } else {
