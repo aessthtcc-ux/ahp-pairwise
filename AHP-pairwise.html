@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AHP Pairwise Comparison — OMG-DIVE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --paper:#FAF6EF;
+    --card:#FFFFFF;
+    --ink:#20262E;
+    --muted:#756C5C;
+    --line:#E5DCC9;
+    --navy:#1F3A5F;
+    --navy-ink:#16293F;
+    --amber:#C98A2C;
+    --amber-soft:#F1DFB8;
+    --teal:#3C7A6E;
+    --teal-soft:#D9ECE7;
+    --clay:#B5482F;
+    --clay-soft:#F3DCD3;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    line-height:1.55;
+    padding-bottom:96px;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:48px 20px 40px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--amber);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:600;
+    font-size:34px;
+    line-height:1.16;
+    margin:0 0 14px;
+    color:var(--navy-ink);
+  }
+  .lede{font-size:16px;color:var(--muted);margin:0 0 8px;max-width:560px;}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:24px;
+    margin-top:22px;
+  }
+  .card h2{
+    font-family:'Fraunces',Georgia,serif;
+    font-size:19px;
+    font-weight:600;
+    margin:0 0 16px;
+    color:var(--navy-ink);
+  }
+  .card .hint{font-size:13.5px;color:var(--muted);margin:-8px 0 18px;}
+
+  /* Intro / penjelasan */
+  .intro-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:26px 26px 24px;
+    margin-top:24px;
+  }
+  .intro-card h2{
+    font-family:'Fraunces',Georgia,serif;
+    font-size:20px;
+    font-weight:600;
+    margin:0 0 10px;
+    color:var(--navy-ink);
+  }
+  .intro-card p{font-size:14.5px;color:var(--ink);margin:0 0 12px;}
+  .intro-card p:last-child{margin-bottom:0;}
+  .intro-divider{height:1px;background:var(--line);margin:18px 0;}
+  .intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px;}
+  .intro-item{font-size:13.5px;}
+  .intro-item .ii-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--amber);
+    font-weight:600;
+    margin-bottom:4px;
+  }
+  .intro-item .ii-val{color:var(--ink);}
+  .product-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:13.5px;font-weight:600;color:var(--navy);
+    text-decoration:none;border-bottom:1.5px solid var(--amber);
+    padding-bottom:1px;
+  }
+  .product-link:hover{color:var(--navy-ink);}
+  .scale-explain{
+    margin-top:16px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .scale-explain b{color:var(--navy-ink);}
+  .start-cta{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    margin-top:24px;flex-wrap:wrap;
+  }
+  .start-cta .txt{font-size:13.5px;color:var(--muted);}
+
+  /* Identitas */
+  .id-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .id-grid .full{grid-column:1/-1;}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:6px;letter-spacing:.01em;}
+  input[type=text],input[type=date]{
+    width:100%;
+    border:1px solid var(--line);
+    background:#FFFDF9;
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:15px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  input:focus-visible{outline:2px solid var(--amber);outline-offset:1px;}
+
+  /* Dimensi reference */
+  .dim-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;}
+  .dim-item{display:flex;gap:10px;align-items:baseline;font-size:14px;}
+  .dim-code{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    color:var(--navy);
+    background:var(--amber-soft);
+    border-radius:5px;
+    padding:1px 6px;
+    font-size:12.5px;
+    flex:none;
+  }
+  .dim-name{color:var(--ink);}
+
+  /* Instruksi box */
+  .instr{
+    background:var(--navy);
+    color:#F4EFE3;
+    border-radius:12px;
+    padding:18px 20px;
+    margin-top:22px;
+    font-size:14.5px;
+  }
+  .instr b{color:#fff;font-family:'Fraunces',serif;font-size:15px;display:block;margin-bottom:4px;}
+
+  /* Section title for comparisons */
+  .sec-title{
+    margin:34px 0 6px;
+    font-family:'Fraunces',Georgia,serif;
+    font-size:22px;
+    font-weight:600;
+    color:var(--navy-ink);
+  }
+  .sec-sub{font-size:14px;color:var(--muted);margin:0 0 4px;}
+
+  /* Comparison row */
+  .pair{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 20px 18px;
+    margin-top:14px;
+  }
+  .pair-no{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--muted);
+    letter-spacing:.06em;
+    margin-bottom:10px;
+  }
+  .pair-labels{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-size:14.5px;
+    font-weight:600;
+    color:var(--navy-ink);
+    margin-bottom:14px;
+  }
+  .pair-labels span{flex:1;}
+  .pair-labels .right{text-align:right;}
+  .pair-labels .code{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:11.5px;
+    color:var(--amber);
+    margin-right:5px;
+  }
+  .pair-labels .right .code{margin-right:0;margin-left:5px;}
+
+  .scale{position:relative;padding-top:6px;}
+  .beam{
+    position:absolute;
+    left:0;right:0;top:21px;
+    height:1px;
+    background:var(--line);
+    z-index:0;
+  }
+  .pills{
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    z-index:1;
+  }
+  .pill{
+    width:34px;height:34px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--muted);
+    transition:transform .12s ease, border-color .12s ease;
+    flex:none;
+  }
+  .pill:hover{transform:translateY(-1px);border-color:var(--amber);}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+  .pill.tie{width:24px;height:24px;align-self:center;margin-top:5px;}
+  .pill.active.left{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .pill.active.right{background:var(--amber);border-color:var(--amber);color:#fff;}
+  .pill.active.tie{background:var(--teal);border-color:var(--teal);color:#fff;}
+
+  .feedback{
+    margin-top:12px;
+    font-size:13.5px;
+    color:var(--muted);
+    min-height:18px;
+  }
+  .feedback.set{color:var(--navy-ink);font-weight:500;}
+
+  /* Sticky footer */
+  .footer-bar{
+    position:fixed;left:0;right:0;bottom:0;
+    background:rgba(250,246,239,.92);
+    backdrop-filter:blur(6px);
+    border-top:1px solid var(--line);
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    z-index:10;
+  }
+  .progress-wrap{flex:1;max-width:340px;}
+  .progress-text{font-size:12.5px;color:var(--muted);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
+  .progress-track{height:6px;border-radius:4px;background:var(--line);overflow:hidden;}
+  .progress-fill{height:100%;background:var(--amber);width:0%;transition:width .25s ease;}
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    border:none;
+    border-radius:9px;
+    padding:12px 20px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-primary:hover{background:var(--navy-ink);}
+  .btn-primary:disabled{opacity:.55;cursor:not-allowed;}
+  .btn-secondary{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn-secondary:hover{background:var(--navy);color:#fff;}
+
+  /* Results */
+  #results{display:none;}
+  .verdict{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    border-radius:8px;
+    font-weight:600;
+    font-size:14px;
+    margin-top:4px;
+  }
+  .verdict.ok{background:var(--teal-soft);color:var(--teal);}
+  .verdict.bad{background:var(--clay-soft);color:var(--clay);}
+
+  table.weights{width:100%;border-collapse:collapse;margin-top:4px;}
+  table.weights td{padding:9px 4px;font-size:14px;vertical-align:middle;border-bottom:1px solid var(--line);}
+  table.weights td.code{
+    font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--navy);width:40px;
+  }
+  table.weights td.pct{
+    font-family:'IBM Plex Mono',monospace;font-weight:600;width:64px;text-align:right;color:var(--navy-ink);
+  }
+  .bar-track{height:8px;background:var(--paper);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-top:5px;}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--navy),var(--amber));}
+
+  .metrics{
+    display:flex;gap:22px;flex-wrap:wrap;margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--muted);
+  }
+  .metrics b{color:var(--navy-ink);display:block;font-size:16px;margin-top:2px;}
+
+  details{margin-top:18px;}
+  summary{cursor:pointer;font-size:13.5px;color:var(--navy);font-weight:600;}
+  .matrix-table{width:100%;border-collapse:collapse;margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .matrix-table th,.matrix-table td{border:1px solid var(--line);padding:6px;text-align:center;}
+  .matrix-table th{background:var(--navy);color:#fff;font-weight:600;}
+
+  .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .save-status{font-size:12.5px;color:var(--muted);margin-top:10px;}
+  .save-status.ok{color:var(--teal);}
+  .save-status.bad{color:var(--clay);}
+
+  .banner{
+    background:var(--amber-soft);
+    border:1px solid var(--amber);
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:13.5px;
+    margin-top:22px;
+    color:var(--navy-ink);
+  }
+
+  .footer-note{
+    text-align:center;font-size:12px;color:var(--muted);margin-top:30px;
+  }
+
+  @media (max-width:480px){
+    h1{font-size:27px;}
+    .id-grid{grid-template-columns:1fr;}
+    .dim-grid{grid-template-columns:1fr;}
+    .intro-grid{grid-template-columns:1fr;}
+    .pill{width:27px;height:27px;font-size:10px;}
+    .pill.tie{width:19px;height:19px;}
+    .beam{top:17px;}
+    .wrap{padding:32px 14px 30px;}
+    .footer-bar{padding:12px 14px;flex-wrap:wrap;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .pill,.bar-fill,.progress-fill{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">AHP · Expert Judgment</div>
+  <h1>Pairwise Comparison<br>WebGIS StoryMap OMG-DIVE</h1>
+  <p class="lede">Lembar penilaian ahli (expert judgment) untuk menentukan bobot prioritas tujuh dimensi evaluasi kualitas produk WebGIS StoryMap OMG-DIVE, menggunakan metode Analytical Hierarchy Process (AHP).</p>
+
+  <!-- ===================== PENJELASAN TUJUAN ===================== -->
+  <div class="intro-card">
+    <h2>Maksud &amp; Tujuan Survei Ini</h2>
+    <p>OMG-DIVE adalah produk WebGIS StoryMap yang menyajikan informasi spasial situs penyelaman secara interaktif, dapat diakses pada
+      <a class="product-link" href="https://omg-dive.vercel.app" target="_blank" rel="noopener">omg-dive.vercel.app ↗</a>.
+      Untuk mengukur kualitas produk ini secara objektif, tim kami menyusun tujuh dimensi evaluasi yang masing-masing berkontribusi terhadap pengalaman pengguna secara keseluruhan.</p>
+    <p>Karena ketujuh dimensi tersebut tidak sama pentingnya, kami memerlukan <b>bobot prioritas</b> untuk setiap dimensi sebagai dasar perhitungan skor kualitas akhir. Bobot ini ditentukan melalui <b>perbandingan berpasangan (pairwise comparison)</b> menurut metode AHP (Saaty), berdasarkan penilaian ahli (expert judgment) — bukan opini umum pengguna biasa.</p>
+    <p>Sebagai expert/reviewer yang dipilih, Anda diminta membandingkan tingkat kepentingan setiap pasangan dimensi (21 pasangan dari 7 dimensi). Hasil dari seluruh expert akan diagregasi untuk menghasilkan bobot akhir setiap dimensi, yang kemudian digunakan dalam evaluasi kualitas produk OMG-DIVE.</p>
+
+    <div class="intro-divider"></div>
+
+    <div class="intro-grid">
+      <div class="intro-item">
+        <div class="ii-label">Objek Evaluasi</div>
+        <div class="ii-val">WebGIS StoryMap OMG-DIVE (omg-dive.vercel.app)</div>
+      </div>
+      <div class="intro-item">
+        <div class="ii-label">Metode</div>
+        <div class="ii-val">Analytical Hierarchy Process (AHP) — skala Saaty 1–9</div>
+      </div>
+      <div class="intro-item">
+        <div class="ii-label">Jumlah Dimensi</div>
+        <div class="ii-val">7 dimensi, 21 perbandingan berpasangan</div>
+      </div>
+      <div class="intro-item">
+        <div class="ii-label">Estimasi Waktu</div>
+        <div class="ii-val">± 10–15 menit</div>
+      </div>
+    </div>
+
+    <div class="scale-explain">
+      <b>Tentang skala penilaian:</b> Setiap perbandingan disajikan sebagai satu sumbu, dengan dimensi kiri dan kanan di kedua ujungnya. Titik tengah (=) berarti kedua dimensi <b>sama penting</b>. Semakin jauh dari tengah ke salah satu sisi, semakin dominan tingkat kepentingan dimensi pada sisi tersebut (skala 1–9, mengikuti standar Saaty: 1 = sama penting, 3 = sedikit lebih penting, 5 = lebih penting, 7 = sangat lebih penting, 9 = mutlak lebih penting).
+    </div>
+
+    <p style="margin-top:14px;">Setelah seluruh 21 perbandingan terisi, sistem akan menghitung bobot prioritas dan <b>Consistency Ratio (CR)</b> secara otomatis. Jika CR ≤ 0,10, penilaian Anda dianggap konsisten dan jawaban akan otomatis <b>tersimpan ke database kami</b>. Jika CR &gt; 0,10, Anda akan diminta meninjau ulang sebelum data dikirim.</p>
+
+    <div class="start-cta">
+      <span class="txt">Silakan lanjutkan ke bawah untuk mengisi identitas dan memulai penilaian.</span>
+      <button class="btn btn-primary" id="btn-mulai">Mulai Pengisian ↓</button>
+    </div>
+  </div>
+  <!-- =================== END PENJELASAN TUJUAN =================== -->
+
+  <div class="card" id="sec-identitas">
+    <h2>Identitas Pengisi</h2>
+    <div class="id-grid">
+      <div>
+        <label for="f-nama">Nama</label>
+        <input type="text" id="f-nama" placeholder="Nama lengkap">
+      </div>
+      <div>
+        <label for="f-jabatan">Jabatan / Instansi</label>
+        <input type="text" id="f-jabatan" placeholder="Mis. COO, startup GIS">
+      </div>
+      <div class="full">
+        <label for="f-tanggal">Tanggal Pengisian</label>
+        <input type="date" id="f-tanggal">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Dimensi yang Dibandingkan</h2>
+    <div class="dim-grid" id="dim-grid"></div>
+  </div>
+
+  <div class="instr">
+    <b>Cara mengisi</b>
+    Untuk setiap pasangan dimensi di bawah, pilih satu titik pada skala sesuai dimensi mana yang lebih penting dan seberapa besar perbedaannya. Titik tengah berarti kedua dimensi sama penting; semakin ke salah satu sisi, semakin dominan dimensi pada sisi tersebut.
+  </div>
+
+  <div class="sec-title">21 Perbandingan</div>
+  <p class="sec-sub">Geser perhatian dari kiri ke kanan untuk setiap baris, lalu pilih satu titik yang paling sesuai.</p>
+
+  <div id="pairs-container"></div>
+
+  <div id="results" class="card">
+    <h2>Hasil: Bobot Prioritas &amp; Konsistensi</h2>
+    <table class="weights" id="weights-table"></table>
+
+    <div class="metrics">
+      <div>λ maks<b id="m-lambda">—</b></div>
+      <div>Consistency Index (CI)<b id="m-ci">—</b></div>
+      <div>Consistency Ratio (CR)<b id="m-cr">—</b></div>
+    </div>
+    <div id="m-verdict"></div>
+
+    <details>
+      <summary>Lihat matriks perbandingan lengkap</summary>
+      <div style="overflow-x:auto;">
+        <table class="matrix-table" id="matrix-table"></table>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button class="btn btn-secondary" id="btn-copy-summary">Salin Ringkasan</button>
+      <button class="btn btn-secondary" id="btn-copy-csv">Salin Matriks (CSV)</button>
+    </div>
+    <div class="save-status" id="save-status"></div>
+  </div>
+
+  <div id="loaded-banner" class="banner" style="display:none;"></div>
+
+  <p class="footer-note">Data yang Anda kirimkan akan digunakan semata-mata untuk keperluan riset pembobotan dimensi kualitas produk OMG-DIVE.</p>
+
+</div>
+
+<div class="footer-bar">
+  <div class="progress-wrap">
+    <div class="progress-text" id="progress-text">0 / 21 perbandingan terisi</div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+  <button class="btn btn-primary" id="btn-hitung">Hitung Bobot &amp; Konsistensi</button>
+</div>
+
+<script>
+(function(){
+
+  // =====================================================================
+  // KONFIGURASI SUPABASE — GANTI DENGAN PROJECT ANDA SENDIRI
+  // Lihat README_SUPABASE.md untuk cara mendapatkan nilai-nilai ini.
+  // =====================================================================
+  const SUPABASE_URL = 'https://nrzhoyryhhqmkbxlwoqv.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yemhveXJ5aGhxbWtieGx3b3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTU3MDgsImV4cCI6MjA5NzE3MTcwOH0.MZcZuIA9e_APXyrXYib8qYd5xLpf7-M7eh8kYpzdQEs';
+  const SUPABASE_TABLE = 'ahp_responses';
+  // =====================================================================
+
+  let supabaseClient = null;
+  try{
+    if (window.supabase && SUPABASE_URL.indexOf('YOUR-PROJECT-REF') === -1){
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  }catch(e){ console.warn('Supabase init gagal:', e); }
+
+  const dims = [
+    {code:'W1', name:'Kemudahan Akses dan Pemahaman Awal'},
+    {code:'W2', name:'Kemudahan Penggunaan dan Navigasi'},
+    {code:'W3', name:'Tampilan dan Desain Antarmuka'},
+    {code:'W4', name:'Kejelasan Informasi dan Isi Konten'},
+    {code:'W5', name:'Kualitas Visualisasi 3D'},
+    {code:'W6', name:'Kecepatan dan Kelancaran Penggunaan'},
+    {code:'W7', name:'Manfaat Produk'},
+  ];
+  const n = dims.length;
+  const pairs = [];
+  for (let i=0;i<n;i++) for (let j=i+1;j<n;j++) pairs.push([i,j]);
+
+  const STOPS = [
+    {degree:9, side:'left'}, {degree:7, side:'left'}, {degree:5, side:'left'}, {degree:3, side:'left'},
+    {degree:1, side:'tie'},
+    {degree:3, side:'right'}, {degree:5, side:'right'}, {degree:7, side:'right'}, {degree:9, side:'right'}
+  ];
+  const SAATY_LABEL = {1:'Sama penting',3:'Sedikit lebih penting',5:'Lebih penting',7:'Sangat lebih penting',9:'Mutlak lebih penting'};
+  const RI_TABLE = {1:0,2:0,3:0.58,4:0.9,5:1.12,6:1.24,7:1.32,8:1.41,9:1.45,10:1.49};
+
+  const pairState = new Array(pairs.length).fill(null);
+
+  // ---------- Tombol "Mulai Pengisian" ----------
+  document.getElementById('btn-mulai').addEventListener('click', function(){
+    document.getElementById('sec-identitas').scrollIntoView({behavior:'smooth', block:'start'});
+    document.getElementById('f-nama').focus({preventScroll:true});
+  });
+
+  // ---------- Render: dimensi reference ----------
+  const dimGrid = document.getElementById('dim-grid');
+  dims.forEach(d=>{
+    const el = document.createElement('div');
+    el.className = 'dim-item';
+    el.innerHTML = '<span class="dim-code">'+d.code+'</span><span class="dim-name">'+d.name+'</span>';
+    dimGrid.appendChild(el);
+  });
+
+  // ---------- Render: comparison rows ----------
+  const container = document.getElementById('pairs-container');
+  pairs.forEach((p, idx)=>{
+    const [i,j] = p;
+    const row = document.createElement('div');
+    row.className = 'pair';
+    row.dataset.idx = idx;
+
+    const no = document.createElement('div');
+    no.className = 'pair-no';
+    no.textContent = 'PERBANDINGAN ' + (idx+1) + ' / ' + pairs.length;
+    row.appendChild(no);
+
+    const labels = document.createElement('div');
+    labels.className = 'pair-labels';
+    labels.innerHTML =
+      '<span><span class="code">'+dims[i].code+'</span>'+dims[i].name+'</span>'+
+      '<span class="right">'+dims[j].name+'<span class="code">'+dims[j].code+'</span></span>';
+    row.appendChild(labels);
+
+    const scale = document.createElement('div');
+    scale.className = 'scale';
+    const beam = document.createElement('div');
+    beam.className = 'beam';
+    scale.appendChild(beam);
+
+    const pillsWrap = document.createElement('div');
+    pillsWrap.className = 'pills';
+    STOPS.forEach((s, sIdx)=>{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pill ' + s.side;
+      btn.textContent = s.side==='tie' ? '=' : s.degree;
+      btn.setAttribute('aria-label', s.side==='tie' ? 'Sama penting' : (s.side==='left'?dims[i].name:dims[j].name)+' '+SAATY_LABEL[s.degree]);
+      btn.addEventListener('click', ()=> selectStop(idx, sIdx, row));
+      pillsWrap.appendChild(btn);
+    });
+    scale.appendChild(pillsWrap);
+    row.appendChild(scale);
+
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    fb.textContent = 'Belum dipilih';
+    row.appendChild(fb);
+
+    container.appendChild(row);
+  });
+
+  function selectStop(pairIdx, stopIdx, rowEl){
+    const s = STOPS[stopIdx];
+    pairState[pairIdx] = {degree:s.degree, side:s.side, stopIdx};
+    rowEl.querySelectorAll('.pill').forEach((b,k)=> b.classList.toggle('active', k===stopIdx));
+    const [i,j] = pairs[pairIdx];
+    const fb = rowEl.querySelector('.feedback');
+    fb.classList.add('set');
+    if (s.side==='tie'){
+      fb.textContent = dims[i].code+' dan '+dims[j].code+' sama penting.';
+    } else if (s.side==='left'){
+      fb.textContent = dims[i].name+' — '+SAATY_LABEL[s.degree]+' ('+s.degree+') dibanding '+dims[j].code+'.';
+    } else {
+      fb.textContent = dims[j].name+' — '+SAATY_LABEL[s.degree]+' ('+s.degree+') dibanding '+dims[i].code+'.';
+    }
+    updateProgress();
+  }
+
+  // ---------- Progress ----------
+  const progressText = document.getElementById('progress-text');
+  const progressFill = document.getElementById('progress-fill');
+  function updateProgress(){
+    const filled = pairState.filter(Boolean).length;
+    progressText.textContent = filled + ' / ' + pairs.length + ' perbandingan terisi';
+    progressFill.style.width = (filled/pairs.length*100) + '%';
+  }
+
+  // ---------- AHP computation ----------
+  function buildMatrix(){
+    const m = Array.from({length:n}, ()=> Array(n).fill(1));
+    pairs.forEach(([i,j], idx)=>{
+      const st = pairState[idx];
+      if (!st) return;
+      if (st.side==='tie'){ m[i][j]=1; m[j][i]=1; }
+      else if (st.side==='left'){ m[i][j]=st.degree; m[j][i]=1/st.degree; }
+      else { m[i][j]=1/st.degree; m[j][i]=st.degree; }
+    });
+    return m;
+  }
+
+  function computeAHP(m){
+    const gm = m.map(row => Math.pow(row.reduce((a,b)=>a*b,1), 1/n));
+    const sum = gm.reduce((a,b)=>a+b,0);
+    const weights = gm.map(v=>v/sum);
+    const weighted = m.map(row => row.reduce((acc,v,j)=>acc+v*weights[j],0));
+    const ratios = weighted.map((v,i)=>v/weights[i]);
+    const lambdaMax = ratios.reduce((a,b)=>a+b,0)/n;
+    const CI = (lambdaMax - n)/(n-1);
+    const RI = RI_TABLE[n] || 1.32;
+    const CR = RI===0 ? 0 : CI/RI;
+    return {weights, lambdaMax, CI, CR};
+  }
+
+  function fmtCell(v){
+    if (Math.abs(v-1)<1e-9) return '1';
+    if (v>1) return v.toFixed(0);
+    const recip = Math.round(1/v);
+    return '1/'+recip;
+  }
+
+  function renderResults(m, res){
+    const wt = document.getElementById('weights-table');
+    wt.innerHTML = '';
+    dims.forEach((d,i)=>{
+      const pct = res.weights[i]*100;
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="code">'+d.code+'</td>'+
+        '<td>'+d.name+'<div class="bar-track"><div class="bar-fill" style="width:'+pct.toFixed(1)+'%"></div></div></td>'+
+        '<td class="pct">'+pct.toFixed(2)+'%</td>';
+      wt.appendChild(tr);
+    });
+
+    document.getElementById('m-lambda').textContent = res.lambdaMax.toFixed(4);
+    document.getElementById('m-ci').textContent = res.CI.toFixed(4);
+    document.getElementById('m-cr').textContent = res.CR.toFixed(4);
+
+    const verdictEl = document.getElementById('m-verdict');
+    if (res.CR <= 0.1){
+      verdictEl.innerHTML = '<div class="verdict ok">✓ Konsisten — CR ≤ 0.10, hasil dapat digunakan.</div>';
+    } else {
+      verdictEl.innerHTML = '<div class="verdict bad">⚠ Belum konsisten — CR &gt; 0.10. Mohon tinjau ulang perbandingan yang nilainya paling ekstrem.</div>';
+    }
+
+    const mt = document.getElementById('matrix-table');
+    let html = '<tr><th></th>' + dims.map(d=>'<th>'+d.code+'</th>').join('') + '</tr>';
+    m.forEach((row,i)=>{
+      html += '<tr><th>'+dims[i].code+'</th>' + row.map(v=>'<td>'+fmtCell(v)+'</td>').join('') + '</tr>';
+    });
+    mt.innerHTML = html;
+
+    document.getElementById('results').style.display = 'block';
+  }
+
+  // ---------- Copy actions ----------
+  function copyText(text, btn){
+    const original = btn.textContent;
+    function done(ok){
+      btn.textContent = ok ? 'Tersalin ✓' : 'Gagal menyalin';
+      setTimeout(()=> btn.textContent = original, 1800);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=>done(true)).catch(()=>fallbackCopy(text, done));
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+  function fallbackCopy(text, done){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position='fixed'; ta.style.left='-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      done(ok);
+    }catch(e){ done(false); }
+  }
+
+  function getIdentitas(){
+    return {
+      nama: document.getElementById('f-nama').value.trim(),
+      jabatan: document.getElementById('f-jabatan').value.trim(),
+      tanggal: document.getElementById('f-tanggal').value
+    };
+  }
+
+  let lastMatrix=null, lastRes=null;
+
+  document.getElementById('btn-copy-summary').addEventListener('click', function(){
+    if (!lastRes) return;
+    const id = getIdentitas();
+    let lines = [];
+    lines.push('Hasil AHP Pairwise Comparison — WebGIS StoryMap OMG-DIVE');
+    lines.push('Expert: ' + (id.nama||'-') + (id.jabatan? ' ('+id.jabatan+')':''));
+    lines.push('Tanggal: ' + (id.tanggal||'-'));
+    lines.push('');
+    dims.forEach((d,i)=> lines.push(d.code+' - '+d.name+': '+(lastRes.weights[i]*100).toFixed(2)+'%'));
+    lines.push('');
+    lines.push('Lambda Max: '+lastRes.lambdaMax.toFixed(4));
+    lines.push('Consistency Index (CI): '+lastRes.CI.toFixed(4));
+    lines.push('Consistency Ratio (CR): '+lastRes.CR.toFixed(4)+(lastRes.CR<=0.1?' (Konsisten)':' (Tidak Konsisten)'));
+    copyText(lines.join('\n'), this);
+  });
+
+  document.getElementById('btn-copy-csv').addEventListener('click', function(){
+    if (!lastMatrix) return;
+    let csv = ',' + dims.map(d=>d.code).join(',') + '\n';
+    lastMatrix.forEach((row,i)=>{
+      csv += dims[i].code + ',' + row.map(v=>v.toFixed(4)).join(',') + '\n';
+    });
+    copyText(csv, this);
+  });
+
+  // ---------- Penyimpanan ke Supabase ----------
+  async function saveResponseToSupabase(matrix, res, identitas){
+    if (!supabaseClient){
+      return {ok:false, reason:'Supabase belum dikonfigurasi (lihat README_SUPABASE.md).'};
+    }
+    try{
+      const payload = {
+        nama: identitas.nama || null,
+        jabatan: identitas.jabatan || null,
+        tanggal_pengisian: identitas.tanggal || null,
+        pair_state: pairState,
+        matrix: matrix,
+        weights: res.weights,
+        lambda_max: res.lambdaMax,
+        ci: res.CI,
+        cr: res.CR,
+        is_consistent: res.CR <= 0.1,
+        dims: dims,
+        submitted_at: new Date().toISOString()
+      };
+      const { data, error } = await supabaseClient
+        .from(SUPABASE_TABLE)
+        .insert([payload])
+        .select();
+      if (error) return {ok:false, reason:error.message};
+      return {ok:true, data};
+    }catch(e){
+      return {ok:false, reason:e.message || String(e)};
+    }
+  }
+
+  // ---------- Hitung button ----------
+  const btnHitung = document.getElementById('btn-hitung');
+  btnHitung.addEventListener('click', async function(){
+    const filled = pairState.filter(Boolean).length;
+    if (filled < pairs.length){
+      const firstEmpty = pairState.findIndex(s=>!s);
+      const el = container.querySelector('.pair[data-idx="'+firstEmpty+'"]');
+      if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
+      progressText.textContent = (pairs.length-filled)+' perbandingan belum diisi — diarahkan ke yang pertama.';
+      progressText.style.color = 'var(--clay)';
+      setTimeout(()=>{ progressText.style.color=''; updateProgress(); }, 2500);
+      return;
+    }
+
+    const id = getIdentitas();
+    if (!id.nama){
+      document.getElementById('sec-identitas').scrollIntoView({behavior:'smooth', block:'start'});
+      document.getElementById('f-nama').focus();
+      document.getElementById('f-nama').style.borderColor = 'var(--clay)';
+      setTimeout(()=>{ document.getElementById('f-nama').style.borderColor=''; }, 2000);
+      return;
+    }
+
+    const m = buildMatrix();
+    const res = computeAHP(m);
+    lastMatrix = m; lastRes = res;
+    renderResults(m, res);
+    document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+
+    const statusEl = document.getElementById('save-status');
+
+    if (res.CR > 0.1){
+      statusEl.textContent = 'Jawaban belum konsisten (CR > 0.10) — silakan tinjau ulang perbandingan sebelum data dikirim ke database.';
+      statusEl.classList.remove('ok');
+      statusEl.classList.add('bad');
+      return;
+    }
+
+    statusEl.textContent = 'Mengirim ke database...';
+    statusEl.classList.remove('bad');
+    btnHitung.disabled = true;
+
+    const saved = await saveResponseToSupabase(m, res, id);
+    btnHitung.disabled = false;
+
+    if (saved.ok){
+      statusEl.textContent = 'Tersimpan ✓ — terima kasih, jawaban Anda telah masuk ke database kami.';
+      statusEl.classList.add('ok');
+      statusEl.classList.remove('bad');
+    } else {
+      statusEl.textContent = 'Gagal mengirim otomatis (' + (saved.reason||'tidak diketahui') + '). Gunakan tombol salin di atas untuk mengirim hasil secara manual.';
+      statusEl.classList.remove('ok');
+      statusEl.classList.add('bad');
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
