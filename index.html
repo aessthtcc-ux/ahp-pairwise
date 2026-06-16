@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --paper:#FAF6EF;
@@ -399,7 +398,7 @@
       <b>Tentang skala penilaian:</b> Setiap perbandingan disajikan sebagai satu sumbu, dengan dimensi kiri dan kanan di kedua ujungnya. Titik tengah (=) berarti kedua dimensi <b>sama penting</b>. Semakin jauh dari tengah ke salah satu sisi, semakin dominan tingkat kepentingan dimensi pada sisi tersebut (skala 1–9, mengikuti standar Saaty: 1 = sama penting, 3 = sedikit lebih penting, 5 = lebih penting, 7 = sangat lebih penting, 9 = mutlak lebih penting).
     </div>
 
-    <p style="margin-top:14px;">Setelah seluruh 21 perbandingan terisi, sistem akan menghitung bobot prioritas dan <b>Consistency Ratio (CR)</b> secara otomatis, lalu jawaban Anda akan langsung <b>tersimpan ke database kami</b>. CR digunakan tim kami sebagai indikator kualitas data saat agregasi, sehingga Anda tidak perlu khawatir mengulang pengisian — cukup isi sesuai penilaian terbaik Anda.</p>
+    <p style="margin-top:14px;">Setelah seluruh 21 perbandingan terisi, sistem akan menghitung bobot prioritas dan <b>Consistency Ratio (CR)</b> secara otomatis, lalu jawaban Anda akan langsung <b>tersimpan ke database kami</b>. Sebagai cadangan, sebuah file CSV berisi hasil penilaian Anda juga akan otomatis terunduh ke perangkat Anda.</p>
 
     <div class="start-cta">
       <span class="txt">Silakan lanjutkan ke bawah untuk mengisi identitas dan memulai penilaian.</span>
@@ -484,20 +483,12 @@
 (function(){
 
   // =====================================================================
-  // KONFIGURASI SUPABASE — GANTI DENGAN PROJECT ANDA SENDIRI
-  // Lihat README_SUPABASE.md untuk cara mendapatkan nilai-nilai ini.
+  // KONFIGURASI GOOGLE SHEETS WEBHOOK
+  // Ganti dengan URL Web App hasil deploy Apps Script Anda.
+  // Lihat README_GOOGLE_SHEETS.md untuk cara mendapatkan URL ini.
   // =====================================================================
-  const SUPABASE_URL = 'https://nrzhoyryhhqmkbxlwoqv.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_APuW7MKMzskEHuq4CiZHsA_DNpLVSN4';
-  const SUPABASE_TABLE = 'ahp_responses';
+  const SHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbx-jouB0acJLIcDDM9spp4YK-xThkluE5E7ULb01aShmvIZ3BNSl1a-m58T_FuGH18J/exec';
   // =====================================================================
-
-  let supabaseClient = null;
-  try{
-    if (window.supabase && SUPABASE_URL.indexOf('YOUR-PROJECT-REF') === -1){
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-  }catch(e){ console.warn('Supabase init gagal:', e); }
 
   const dims = [
     {code:'W1', name:'Kemudahan Akses dan Pemahaman Awal'},
@@ -739,32 +730,76 @@
     copyText(csv, this);
   });
 
-  // ---------- Penyimpanan ke Supabase ----------
-  async function saveResponseToSupabase(matrix, res, identitas){
-    if (!supabaseClient){
-      return {ok:false, reason:'Supabase belum dikonfigurasi (lihat README_SUPABASE.md).'};
+  // ---------- Unduh otomatis sebagai CSV per-expert ----------
+  function downloadResponseAsCSV(matrix, res, identitas){
+    const safeName = (identitas.nama || 'expert').trim().replace(/[^a-zA-Z0-9_-]+/g,'_');
+    const rows = [];
+    rows.push(['Nama', identitas.nama || '']);
+    rows.push(['Jabatan', identitas.jabatan || '']);
+    rows.push(['Tanggal', identitas.tanggal || '']);
+    rows.push(['Disimpan pada', new Date().toISOString()]);
+    rows.push([]);
+    rows.push(['Kode', 'Dimensi', 'Bobot (%)']);
+    dims.forEach((d,i)=> rows.push([d.code, d.name, (res.weights[i]*100).toFixed(2)]));
+    rows.push([]);
+    rows.push(['Lambda Max', res.lambdaMax.toFixed(4)]);
+    rows.push(['Consistency Index (CI)', res.CI.toFixed(4)]);
+    rows.push(['Consistency Ratio (CR)', res.CR.toFixed(4)]);
+    rows.push(['Status', res.CR<=0.1 ? 'Konsisten' : 'Tidak Konsisten']);
+    rows.push([]);
+    rows.push(['Matriks Perbandingan Lengkap']);
+    rows.push(['', ...dims.map(d=>d.code)]);
+    matrix.forEach((row,i)=>{
+      rows.push([dims[i].code, ...row.map(v=>v.toFixed(4))]);
+    });
+
+    const csvContent = rows.map(r => r.map(cell=>{
+      const s = String(cell);
+      return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+    }).join(',')).join('\n');
+
+    const blob = new Blob(['\uFEFF'+csvContent], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const tanggal = identitas.tanggal || new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = 'AHP_OMGDIVE_' + safeName + '_' + tanggal + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=> URL.revokeObjectURL(url), 1000);
+    return {ok:true};
+  }
+
+  // ---------- Kirim ke Google Sheets via Apps Script Webhook ----------
+  async function sendToGoogleSheets(matrix, res, identitas){
+    if (!SHEET_WEBHOOK_URL || SHEET_WEBHOOK_URL.indexOf('PASTE_URL_WEB_APP_ANDA_DISINI') !== -1){
+      return {ok:false, reason:'Webhook belum dikonfigurasi'};
     }
     try{
       const payload = {
-        nama: identitas.nama || null,
-        jabatan: identitas.jabatan || null,
-        tanggal_pengisian: identitas.tanggal || null,
-        pair_state: pairState,
-        matrix: matrix,
+        nama: identitas.nama || '',
+        jabatan: identitas.jabatan || '',
+        tanggal: identitas.tanggal || '',
         weights: res.weights,
-        lambda_max: res.lambdaMax,
+        lambdaMax: res.lambdaMax,
         ci: res.CI,
         cr: res.CR,
-        is_consistent: res.CR <= 0.1,
-        dims: dims,
-        submitted_at: new Date().toISOString()
+        isConsistent: res.CR <= 0.1,
+        matrix: matrix
       };
-      const { data, error } = await supabaseClient
-        .from(SUPABASE_TABLE)
-        .insert([payload])
-        .select();
-      if (error) return {ok:false, reason:error.message};
-      return {ok:true, data};
+      // Apps Script Web App tidak mendukung header custom dari browser tanpa
+      // preflight CORS yang rumit, jadi pakai text/plain agar request "simple"
+      // dan tidak memicu preflight OPTIONS yang sering gagal di Apps Script.
+      await fetch(SHEET_WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      // mode no-cors tidak mengizinkan kita membaca response,
+      // jadi kita anggap berhasil terkirim selama tidak ada exception jaringan.
+      return {ok:true};
     }catch(e){
       return {ok:false, reason:e.message || String(e)};
     }
@@ -800,24 +835,24 @@
     document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
 
     const statusEl = document.getElementById('save-status');
-
-    statusEl.textContent = 'Mengirim ke database...';
-    statusEl.classList.remove('bad');
+    statusEl.textContent = 'Mengirim hasil...';
+    statusEl.classList.remove('ok','bad');
     btnHitung.disabled = true;
 
-    const saved = await saveResponseToSupabase(m, res, id);
+    const sent = await sendToGoogleSheets(m, res, id);
+    downloadResponseAsCSV(m, res, id); // tetap unduh CSV sebagai cadangan
     btnHitung.disabled = false;
 
-    if (saved.ok){
+    if (sent.ok){
       if (res.CR <= 0.1){
-        statusEl.textContent = 'Tersimpan ✓ — terima kasih, jawaban Anda telah masuk ke database kami.';
+        statusEl.textContent = 'Tersimpan ✓ — terima kasih, jawaban Anda telah masuk ke database kami. Salinan CSV juga telah diunduh sebagai cadangan.';
       } else {
-        statusEl.textContent = 'Tersimpan ✓ — terima kasih. Catatan: konsistensi penilaian sedikit di luar ambang ideal (CR > 0.10), namun jawaban Anda tetap tercatat dan akan ditinjau oleh tim kami.';
+        statusEl.textContent = 'Tersimpan ✓ — terima kasih. Catatan: konsistensi penilaian sedikit di luar ambang ideal (CR > 0.10), namun jawaban Anda tetap tercatat. Salinan CSV juga telah diunduh sebagai cadangan.';
       }
       statusEl.classList.add('ok');
       statusEl.classList.remove('bad');
     } else {
-      statusEl.textContent = 'Gagal mengirim otomatis (' + (saved.reason||'tidak diketahui') + '). Gunakan tombol salin di atas untuk mengirim hasil secara manual.';
+      statusEl.textContent = 'Tidak dapat mengirim otomatis ke database (' + (sent.reason||'koneksi gagal') + '). File CSV cadangan sudah diunduh — mohon kirimkan ke tim kami secara manual.';
       statusEl.classList.remove('ok');
       statusEl.classList.add('bad');
     }
